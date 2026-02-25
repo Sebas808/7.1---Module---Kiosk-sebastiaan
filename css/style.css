@@ -1,0 +1,436 @@
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Font Face for Renos-Rough */
+@font-face {
+    font-family: 'renos-rough';
+    src: url('../assets/fonts/renos-rough-webfont.woff2') format('woff2'),
+        url('../assets/fonts/renos-rough-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: "Noto Sans", sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    background-color: #1a1a1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#kiosk-wrapper {
+    position: relative;
+    width: 700px;
+    height: 1920px;
+    /* Scale down to fit the screen while maintaining aspect ratio if the screen is smaller */
+    max-width: 100vw;
+    max-height: 100vh;
+    aspect-ratio: 9/16;
+
+    background-color: #053631;
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    /* Slight rounded corners for the screen */
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.screen.active {
+    opacity: 1;
+    pointer-events: all;
+    z-index: 10;
+    transform: scale(1);
+}
+
+.screen.hidden {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+}
+
+/* ==================
+   Start Screen Styles
+   ================== */
+#start-screen {
+    background: #8cd003;
+    color: #deff78;
+    /* LightGreen text */
+    text-align: center;
+}
+
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: 90%;
+    width: 100%;
+    padding: 2rem;
+}
+
+.logo-container h1 {
+    font-family: 'renos-rough', sans-serif;
+    font-size: 5rem;
+    /* Increased size for impact with new font */
+    line-height: 1;
+    color: #ff7520;
+    /* Orange */
+    text-transform: uppercase;
+    text-shadow: 4px 4px 0px #053631;
+    /* DarkBlue shadow */
+    margin-bottom: 0.5rem;
+}
+
+.logo-container .subtitle {
+    font-size: 1.5rem;
+    color: #ffb181;
+    /* LightOrange */
+    letter-spacing: 2px;
+    font-weight: 600;
+}
+
+.mascot-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sun-bg {
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    background-color: #deff78;
+    /* LightGreen Sun */
+    border-radius: 50%;
+    z-index: -1;
+    box-shadow: 0 0 40px #deff78;
+}
+
+.dino-mascot {
+    width: 100%;
+    height: auto;
+    max-width: 320px;
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
+}
+
+.cta-button {
+    background: linear-gradient(to bottom, #ff7520, #e65100);
+    /* Orange Gradient */
+    color: #053631;
+    /* DarkBlue Text on Orange Button */
+    font-family: 'renos-rough', sans-serif;
+    font-size: 2.5rem;
+    font-weight: normal;
+    text-decoration: none;
+    display: inline-block;
+    padding: 1rem 3rem;
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 8px 0 #bf360c, 0 15px 20px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.cta-button:active {
+    transform: translateY(4px);
+    box-shadow: 0 4px 0 #E65100, 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* ==================
+   End Screen Styles
+   ================== */
+#end-screen {
+    background-color: #deff78;
+    /* LightGreen Background */
+    color: #053631;
+    /* DarkBlue Text */
+    text-align: center;
+    overflow: hidden;
+}
+
+.end-content {
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.success-checkmark {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #8cd003;
+    /* Green */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 20px rgba(5, 54, 49, 0.2);
+    margin-bottom: 1rem;
+}
+
+.checkmark {
+    width: 60px;
+    height: 60px;
+    stroke-width: 5;
+    stroke: #fff;
+    fill: none;
+    stroke-linecap: round;
+}
+
+.checkmark__circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 5;
+    stroke-miterlimit: 10;
+    stroke: #fff;
+    fill: none;
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark__check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+.thank-you-text {
+    font-family: 'renos-rough', sans-serif;
+    font-size: 4.5rem;
+    color: #ff7520;
+    /* Orange */
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0 #053631;
+}
+
+.order-complete-text {
+    font-size: 1.8rem;
+    color: #053631;
+    /* DarkBlue */
+    font-weight: 700;
+}
+
+.preparing-text {
+    font-size: 1.2rem;
+    color: #053631;
+    /* DarkBlue */
+}
+
+.mascot-container-small {
+    width: 200px;
+    height: 200px;
+    margin: 1rem 0;
+}
+
+.dino-eating {
+    width: 100%;
+    height: auto;
+}
+
+.secondary-button {
+    background: #053631;
+    /* DarkBlue */
+    color: #deff78;
+    /* LightGreen Text */
+    font-family: "Noto Sans", sans-serif;
+    /* Keep reading font for secondary buttons */
+    font-size: 1.2rem;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 0 #03221f;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.1s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.secondary-button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #2E7D32;
+}
+
+/* ==================
+   Animations
+   ================== */
+@keyframes floating {
+    0% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-15px) rotate(2deg);
+    }
+
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+}
+
+.floating {
+    animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    70% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.bounce-in {
+    animation: bounceIn 1s cubic-bezier(0.215, 0.610, 0.355, 1.000) both;
+}
+
+@keyframes scaleIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.scale-in {
+    animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.320, 1.275) both;
+}
+
+@keyframes slideUp {
+    0% {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.slide-up {
+    animation: slideUp 0.6s ease-out both;
+}
+
+.slide-up-delay {
+    animation: slideUp 0.6s ease-out 0.2s both;
+}
+
+.slide-up-delay-2 {
+    animation: slideUp 0.6s ease-out 0.4s both;
+}
+
+.slide-up-delay-3 {
+    animation: slideUp 0.6s ease-out 0.6s both;
+}
+
+@keyframes sway {
+    0% {
+        transform: rotate(-5deg);
+    }
+
+    50% {
+        transform: rotate(5deg);
+    }
+
+    100% {
+        transform: rotate(-5deg);
+    }
+}
+
+.sway {
+    animation: sway 2s ease-in-out infinite;
+}
+
+/* Confetti Container */
+#confetti-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 5;
+}
+
+/* Confetti Piece */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #ff7520;
+    /* Orange Confetti Default */
+    z-index: 0;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(2000px) rotate(720deg);
+    }
+}
