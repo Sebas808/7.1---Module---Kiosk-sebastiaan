@@ -5,16 +5,18 @@ require_once "../db/database.php";
 
 $sql = "
 SELECT 
-    c.name AS category,
     p.product_id,
     p.name,
     p.description,
     p.price,
     p.kcal AS calories,
-    p.image_id
+    c.name AS category,
+    i.filename AS image_filename
 FROM products p
 JOIN categories c 
     ON p.category_id = c.category_id
+LEFT JOIN images i
+    ON p.image_id = i.image_id
 WHERE p.available = 1
 ORDER BY c.category_id, p.product_id
 ";

@@ -413,19 +413,21 @@
                             const priceFormatted = parseFloat(item.price).toFixed(2).replace('.', ',');
 
                             // Image fetching logic: load the image directly with fallback
-                            let imageSrc = item.image_id ? `assets/${item.image_id}` : 'assets/dino_start.png';
+                            let imageSrc = item.image_filename
+                                ? `assets/img/${item.image_filename}`
+                                : 'assets/dino_start.png';
 
                             grid.innerHTML += `
-                                <div class="product-card">
-                                    <img src="${imageSrc}" alt="${item.name}" class="product-image" onerror="this.src='assets/dino_start.png'">
-                                    <h3 class="product-name">${item.name}</h3>
-                                    <p class="product-desc">${item.description ?? ""}</p>
-                                    <div class="product-meta">
-                                        <span class="product-kcal">${item.calories} kcal</span>
-                                        <span class="product-price">€${priceFormatted}</span>
-                                    </div>
-                                </div>
-                            `;
+    <div class="product-card">
+        <img src="${imageSrc}" alt="${item.name}" class="product-image">
+        <h3 class="product-name">${item.name}</h3>
+        <p class="product-desc">${item.description ?? ""}</p>
+        <div class="product-meta">
+            <span class="product-kcal">${item.calories} kcal</span>
+            <span class="product-price">€${priceFormatted}</span>
+        </div>
+    </div>
+`;
                         });
 
                         section.appendChild(grid);
