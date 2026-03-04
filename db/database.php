@@ -3,7 +3,7 @@
 $host = "localhost";
 $dbname = "kiosk_menu";
 $username = "u240198_kiosk";
-$password = "DymbW8q8zU7CeXrmgdPW";
+$password = "ks4aZ9R2sRpEe8NAWe8v";
 
 try {
     $pdo = new PDO(
