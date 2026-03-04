@@ -1,7 +1,7 @@
 <?php
 
 $host = "localhost";
-$dbname = "kiosk_menu";
+$dbname = "u240198_kiosk";
 $username = "u240198_kiosk";
 $password = "ks4aZ9R2sRpEe8NAWe8v";
 
