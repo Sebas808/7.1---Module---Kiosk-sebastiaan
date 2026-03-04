@@ -1,9 +1,9 @@
 <?php
 
 $host = "localhost";
-$dbname = "kiosk_menu";
-$username = "root";
-$password = "";
+$dbname = "u240198_kiosk";
+$username = "u240198_kiosk";
+$password = "DymbW8q8zU7CeXrmgdPW";
 
 try {
     $pdo = new PDO(

@@ -320,6 +320,90 @@
             transform: translateY(3px);
             box-shadow: 0 2px 0 #5e8a02;
         }
+
+        /* Cart Bar (Bottom Fixed) */
+        .cart-bar {
+            background-color: #053631;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 20;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.320, 1.275);
+        }
+
+        .cart-bar.active {
+            transform: translateY(0);
+        }
+
+        .cart-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .cart-count-badge {
+            background: #ff7520;
+            color: #053631;
+            font-family: 'renos-rough', sans-serif;
+            font-size: 1.8rem;
+            width: 55px;
+            height: 55px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 0 #bf360c;
+        }
+
+        .cart-total-text {
+            color: #deff78;
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .checkout-btn {
+            background: #8cd003;
+            color: #053631;
+            font-family: 'renos-rough', sans-serif;
+            font-size: 2.2rem;
+            padding: 1rem 3.5rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #5e8a02;
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .checkout-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #5e8a02;
+        }
+
+        /* Product Card Animation for adding to cart */
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(140, 208, 3, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(140, 208, 3, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(140, 208, 3, 0);
+            }
+        }
+
+        .product-card.added {
+            animation: pulse-green 0.5s ease-out;
+            border-color: #8cd003;
+            background-color: #f4f8e8;
+        }
     </style>
 </head>
 
@@ -342,6 +426,15 @@
             </div>
         </div>
 
+        <!-- Sticky Cart Bar -->
+        <div class="cart-bar" id="cart-bar">
+            <div class="cart-info">
+                <div class="cart-count-badge" id="cart-count">0</div>
+                <div class="cart-total-text" id="cart-total">Totaal: €0,00</div>
+            </div>
+            <a href="order_pagina.php" class="checkout-btn" id="checkout-link">VERDER</a>
+        </div>
+
         <!-- Inactivity Modal -->
         <div id="inactivity-modal">
             <div class="modal-content">
@@ -354,15 +447,49 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            let cart = [];
+
+            function updateCartUI() {
+                const cartBar = document.getElementById('cart-bar');
+                const cartCount = document.getElementById('cart-count');
+                const cartTotal = document.getElementById('cart-total');
+
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+                if (totalItems > 0) {
+                    cartBar.classList.add('active');
+                } else {
+                    cartBar.classList.remove('active');
+                }
+
+                cartCount.innerText = totalItems;
+                cartTotal.innerText = `Totaal: €${totalPrice.toFixed(2).replace('.', ',')}`;
+
+                // Save cart to localStorage for order_pagina.php
+                localStorage.setItem('kiosk_cart', JSON.stringify(cart));
+            }
+
+            function addToCart(product) {
+                const existing = cart.find(item => item.product_id === product.product_id);
+                if (existing) {
+                    existing.quantity += 1;
+                } else {
+                    cart.push({
+                        ...product,
+                        quantity: 1
+                    });
+                }
+                updateCartUI();
+            }
+
             fetch("api/get_menu.php")
                 .then(res => res.json())
                 .then(data => {
                     const productsContainer = document.getElementById("products-container");
                     const categoriesContainer = document.getElementById("categories-container");
 
-                    // Group products by category
                     const categoriesMap = new Map();
-
                     data.forEach(item => {
                         if (!categoriesMap.has(item.category)) {
                             categoriesMap.set(item.category, []);
@@ -371,76 +498,69 @@
                     });
 
                     let isFirst = true;
-
                     categoriesMap.forEach((items, categoryName) => {
                         const safeCategoryClass = categoryName.replace(/\s+/g, '-').toLowerCase();
 
-                        // 1. Create Category Navigation Button (Right Sidebar)
                         const catBtn = document.createElement("button");
                         catBtn.className = `category-btn ${isFirst ? 'active' : ''}`;
                         catBtn.innerText = categoryName;
                         catBtn.dataset.target = safeCategoryClass;
 
                         catBtn.addEventListener("click", () => {
-                            // Highlight the active category button
                             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
                             catBtn.classList.add('active');
-
-                            // Show the corresponding category products left side
                             document.querySelectorAll('.category-section').forEach(sec => sec.classList.remove('active'));
                             document.getElementById(`section-${safeCategoryClass}`).classList.add('active');
-
-                            // Scroll top for convenience
                             productsContainer.scrollTop = 0;
                         });
 
                         categoriesContainer.appendChild(catBtn);
 
-                        // 2. Create Category Products Section (Left Content Area)
                         const section = document.createElement("div");
                         section.className = `category-section ${isFirst ? 'active' : ''}`;
                         section.id = `section-${safeCategoryClass}`;
-
-                        // Section Title
                         section.innerHTML = `<h2 class="category-title">${categoryName}</h2>`;
 
-                        // Grid for Products
                         const grid = document.createElement("div");
                         grid.className = "product-grid";
 
                         items.forEach(item => {
-                            // Formatting the price neatly to strings with commas (nl format)
                             const priceFormatted = parseFloat(item.price).toFixed(2).replace('.', ',');
-
-                            // Image fetching logic: load the image directly with fallback
                             let imageSrc = item.image_filename
                                 ? `assets/img/${item.image_filename}`
                                 : 'assets/dino_start.png';
 
-                            grid.innerHTML += `
-    <div class="product-card">
-        <img src="${imageSrc}" alt="${item.name}" class="product-image">
-        <h3 class="product-name">${item.name}</h3>
-        <p class="product-desc">${item.description ?? ""}</p>
-        <div class="product-meta">
-            <span class="product-kcal">${item.calories} kcal</span>
-            <span class="product-price">€${priceFormatted}</span>
-        </div>
-    </div>
-`;
+                            const card = document.createElement("div");
+                            card.className = "product-card";
+                            card.innerHTML = `
+                                <img src="${imageSrc}" alt="${item.name}" class="product-image">
+                                <h3 class="product-name">${item.name}</h3>
+                                <p class="product-desc">${item.description ?? ""}</p>
+                                <div class="product-meta">
+                                    <span class="product-kcal">${item.calories} kcal</span>
+                                    <span class="product-price">€${priceFormatted}</span>
+                                </div>
+                            `;
+
+                            card.addEventListener("click", () => {
+                                addToCart(item);
+                                card.classList.add('added');
+                                setTimeout(() => card.classList.remove('added'), 500);
+                            });
+
+                            grid.appendChild(card);
                         });
 
                         section.appendChild(grid);
                         productsContainer.appendChild(section);
-
                         isFirst = false;
                     });
 
                     // --- Inactivity Timer Logic ---
                     let inactivityTimer;
                     let modalTimer;
-                    const INACTIVITY_TIME = 15000; // 15 seconds
-                    const MODAL_TIME = 10000; // 10 seconds to respond
+                    const INACTIVITY_TIME = 30000;
+                    const MODAL_TIME = 15000;
 
                     const modal = document.getElementById('inactivity-modal');
                     const stayBtn = document.getElementById('stay-btn');
@@ -455,25 +575,30 @@
                     function showModal() {
                         if (modal) modal.classList.add('show');
                         modalTimer = setTimeout(() => {
+                            localStorage.removeItem('kiosk_cart');
                             window.location.href = 'index.html';
                         }, MODAL_TIME);
                     }
 
-                    // Listen for interactions on the whole document
                     ['click', 'touchstart', 'mousemove', 'scroll'].forEach(evt =>
                         document.addEventListener(evt, resetTimer, true)
                     );
 
                     if (stayBtn) {
                         stayBtn.addEventListener('click', (e) => {
-                            e.stopPropagation(); // prevent document click from firing again unnecessarily
+                            e.stopPropagation();
                             resetTimer();
                         });
                     }
 
-                    // Start timer immediately
                     resetTimer();
 
+                    // Initial UI sync
+                    const savedCart = localStorage.getItem('kiosk_cart');
+                    if (savedCart) {
+                        cart = JSON.parse(savedCart);
+                        updateCartUI();
+                    }
                 })
                 .catch(err => console.error("Fout bij het laden van het menu:", err));
         });
