@@ -79,8 +79,13 @@ body {
 }
 
 #start-btn {
-    width: 270px;
-    font-size: smaller;
+    width: 500px;
+    font-size: larger;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 100px;
 }
 
 /* Slideshow */
@@ -167,16 +172,18 @@ body {
     z-index: 2;
 }
 
+.logo-container {
+    margin-top: 860px;
+    height: 100px;
+}
+
 .logo-container h1 {
     font-family: 'renos-rough', sans-serif;
     font-size: 5rem;
-    /* Increased size for impact with new font */
     line-height: 1;
     color: #ff7520;
-    /* Orange */
     text-transform: uppercase;
     text-shadow: 5px 5px 0px #053631, 0 0 25px rgba(255, 117, 32, 0.8), 0 0 45px rgba(255, 117, 32, 0.5);
-    /* DarkBlue shadow and glow to make it pop */
     margin-bottom: 0.5rem;
     transform: scale(1.05);
 }
