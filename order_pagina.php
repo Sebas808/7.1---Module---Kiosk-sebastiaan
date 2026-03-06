@@ -193,6 +193,42 @@
             color: #666;
             margin-bottom: 2rem;
         }
+
+        #printer-status {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #666;
+            padding: 10px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #printer-status.success {
+            color: #28a745;
+            display: block;
+        }
+
+        #printer-status.error {
+            color: #dc3545;
+            display: block;
+        }
+
+        #printer-status.loading {
+            color: #007bff;
+            display: block;
+        }
+
+        .printer-setup-btn {
+            background: none;
+            border: 2px dashed #ccc;
+            color: #999;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
     </style>
 </head>
 
@@ -222,12 +258,112 @@
                 <span class="total-amount" id="grand-total">€0,00</span>
             </div>
             <button class="pay-btn" id="pay-button">AFREKENEN</button>
+            <div id="printer-status"></div>
+            <button class="printer-setup-btn" id="setup-printer">Printer Instellen (USB)</button>
         </section>
     </main>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             let cart = JSON.parse(localStorage.getItem('kiosk_cart') || '[]');
+            let selectedDevice = null;
+
+            const PRINTER_VENDORS = [
+                0x0483, // STM Microelectronics (Xprinter)
+                0x04b8, // Seiko Epson
+                0x0456, // Microtek
+                0x067b, // Prolific Technology
+            ];
+
+            function updatePrinterStatus(msg, type) {
+                const statusEl = document.getElementById('printer-status');
+                statusEl.textContent = msg;
+                statusEl.className = 'status ' + (type || '');
+                if (type) statusEl.style.display = 'block';
+            }
+
+            async function autoDetectPrinter() {
+                if (!navigator.usb) return;
+                try {
+                    const devices = await navigator.usb.getDevices();
+                    const printer = devices.find(d => PRINTER_VENDORS.includes(d.vendorId));
+                    if (printer) {
+                        selectedDevice = printer;
+                        console.log("Printer gevonden:", printer.productName);
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            async function selectUSBDevice() {
+                try {
+                    const filters = PRINTER_VENDORS.map(v => ({ vendorId: v }));
+                    selectedDevice = await navigator.usb.requestDevice({ filters });
+                    updatePrinterStatus("✓ Printer verbonden: " + (selectedDevice.productName || "Onbekend"), "success");
+                } catch (e) {
+                    updatePrinterStatus("Printer selectie geannuleerd", "error");
+                }
+            }
+
+            function buildReceipt() {
+                const INIT = "\x1B\x40";
+                const CENTER = "\x1B\x61\x01";
+                const LEFT = "\x1B\x61\x00";
+                const BOLD_ON = "\x1B\x45\x01";
+                const BOLD_OFF = "\x1B\x45\x00";
+                const CUT = "\x1D\x56\x00";
+
+                let total = 0;
+                let itemsText = "";
+                cart.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+                    const name = item.name.substring(0, 22);
+                    const price = itemTotal.toFixed(2).replace('.', ',');
+                    itemsText += `${item.quantity}x ${name.padEnd(22, " ")} EUR ${price.padStart(6, " ")}\n`;
+                });
+
+                const now = new Date();
+                const dateStr = now.toLocaleDateString() + " " + now.toLocaleTimeString();
+
+                return INIT +
+                    CENTER + BOLD_ON + "KIOSK BESTELLING\n" + BOLD_OFF +
+                    "--------------------------------\n" +
+                    LEFT + itemsText +
+                    "--------------------------------\n" +
+                    BOLD_ON + "TOTAAL:           EUR " + total.toFixed(2).replace('.', ',').padStart(8, " ") + BOLD_OFF + "\n\n" +
+                    CENTER + dateStr + "\n" +
+                    "Bedankt voor uw bezoek!\n" +
+                    "\n\n\n\n\n" +
+                    CUT;
+            }
+
+            async function printReceipt() {
+                if (!selectedDevice) {
+                    // Try one last auto-detect before giving up
+                    await autoDetectPrinter();
+                    if (!selectedDevice) {
+                        throw new Error("Geen printer verbonden. Klik op 'Printer Instellen'.");
+                    }
+                }
+
+                updatePrinterStatus("Bon printen...", "loading");
+
+                await selectedDevice.open();
+                if (selectedDevice.configuration === null) await selectedDevice.selectConfiguration(1);
+                try { await selectedDevice.claimInterface(0); } catch (e) { }
+
+                const encoder = new TextEncoder();
+                const receiptData = buildReceipt();
+                const intf = selectedDevice.configuration.interfaces[0].alternates[0];
+                const endpoint = intf.endpoints.find(e => e.direction === 'out');
+
+                if (!endpoint) throw new Error("Printer endpoint niet gevonden");
+
+                await selectedDevice.transferOut(endpoint.endpointNumber, encoder.encode(receiptData));
+                updatePrinterStatus("✓ Bon geprint!", "success");
+
+                setTimeout(() => selectedDevice.close(), 1000);
+            }
 
             function renderCart() {
                 const container = document.getElementById('cart-items');
@@ -289,13 +425,36 @@
                 renderCart();
             };
 
-            document.getElementById('pay-button').addEventListener('click', () => {
-                // In a real kiosk, this would trigger a payment terminal.
-                // Here we just navigate to the end page.
-                localStorage.removeItem('kiosk_cart'); // Clear cart after "payment"
-                window.location.href = 'eindpagina.php';
+            document.getElementById('setup-printer').addEventListener('click', selectUSBDevice);
+
+            document.getElementById('pay-button').addEventListener('click', async () => {
+                const btn = document.getElementById('pay-button');
+                btn.disabled = true;
+                btn.innerText = "VERWERKEN...";
+
+                try {
+                    // Try to print first
+                    await printReceipt();
+                    // Small delay to let the user see the "Geprint" status
+                    setTimeout(() => {
+                        localStorage.removeItem('kiosk_cart');
+                        window.location.href = 'eindpagina.php';
+                    }, 1500);
+                } catch (error) {
+                    // If printing fails, ask user if they want to proceed anyway or fix printer
+                    updatePrinterStatus("Printer Fout: " + error.message, "error");
+                    btn.disabled = false;
+                    btn.innerText = "AFREKENEN (PROBEER OPNIEUW)";
+
+                    // Option to proceed without print for kiosk resilience
+                    if (confirm("Er is een probleem met de printer. Wilt u toch afrekenen zonder bon?")) {
+                        localStorage.removeItem('kiosk_cart');
+                        window.location.href = 'eindpagina.php';
+                    }
+                }
             });
 
+            autoDetectPrinter();
             renderCart();
         });
     </script>
