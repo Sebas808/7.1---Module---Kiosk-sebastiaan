@@ -404,6 +404,179 @@
             border-color: #8cd003;
             background-color: #f4f8e8;
         }
+
+        /* Product Detail Modal Styles */
+        #product-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+
+        #product-modal.show {
+            display: flex;
+        }
+
+        .custom-modal-content {
+            background: #f4f6f8;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            border-radius: 30px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-body {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        /* Step 1 Styles */
+        .step-details {
+            text-align: center;
+        }
+
+        .modal-product-img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 15px 15px rgba(0, 0, 0, 0.1));
+        }
+
+        .modal-product-name {
+            font-family: 'renos-rough', sans-serif;
+            font-size: 3rem;
+            color: #053631;
+            margin-bottom: 1rem;
+        }
+
+        .modal-product-kcal {
+            font-size: 1.2rem;
+            background: #8cd003;
+            color: #053631;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            font-weight: 800;
+        }
+
+        .modal-product-desc {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 2rem;
+        }
+
+        /* Step 2 Styles */
+        .step-dips {
+            display: none;
+        }
+
+        .dips-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .dip-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            border: 3px solid transparent;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dip-card.selected {
+            border-color: #ff7520;
+            background: #fff8f4;
+        }
+
+        .dip-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 0.5rem;
+        }
+
+        .dip-name {
+            font-weight: 800;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .dip-price {
+            color: #ff7520;
+            font-weight: 900;
+        }
+
+        /* Modal Footer */
+        .modal-footer {
+            padding: 2rem;
+            background: white;
+            display: flex;
+            gap: 1rem;
+            box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 1.5rem;
+            border-radius: 50px;
+            border: none;
+            font-family: 'renos-rough', sans-serif;
+            font-size: 1.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.1s;
+        }
+
+        .btn-cancel {
+            background: #eee;
+            color: #666;
+        }
+
+        .btn-next {
+            background: #ff7520;
+            color: white;
+        }
+
+        .btn-add {
+            background: #8cd003;
+            color: #053631;
+        }
+
+        .modal-btn:active {
+            transform: translateY(3px);
+        }
     </style>
 </head>
 
@@ -443,11 +616,139 @@
                 <button class="stay-btn" id="stay-btn">JA, IK BEN ER NOG</button>
             </div>
         </div>
+
+        <!-- Product Customization Modal -->
+        <div id="product-modal">
+            <div class="custom-modal-content">
+                <div class="modal-body">
+                    <!-- Step 1: Product Deatils -->
+                    <div id="modal-step-1" class="step-details">
+                        <img id="modal-img" src="" alt="" class="modal-product-img">
+                        <h2 id="modal-name" class="modal-product-name">Product Naam</h2>
+                        <div id="modal-kcal" class="modal-product-kcal">0 kcal</div>
+                        <p id="modal-desc" class="modal-product-desc">Beschrijving komt hier...</p>
+                    </div>
+
+                    <!-- Step 2: Signature Dips -->
+                    <div id="modal-step-2" class="step-dips">
+                        <h2 class="modal-product-name" style="font-size: 2.2rem; margin-bottom: 0.5rem;">KIES JE DIP
+                        </h2>
+                        <p style="text-align:center; color:#666;">Wil je er een heerlijke signature dip bij?</p>
+                        <div id="dips-container" class="dips-grid">
+                            <!-- Dips injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="modal-btn btn-cancel" id="modal-cancel-btn">Annuleren</button>
+                    <button class="modal-btn btn-next" id="modal-next-btn">Volgende</button>
+                    <button class="modal-btn btn-add" id="modal-add-btn" style="display:none;">Toevoegen</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             let cart = [];
+            let currentSelectedProduct = null;
+            let selectedDips = [];
+            let allMenuData = [];
+
+            const productModal = document.getElementById('product-modal');
+            const step1 = document.getElementById('modal-step-1');
+            const step2 = document.getElementById('modal-step-2');
+            const nextBtn = document.getElementById('modal-next-btn');
+            const addBtn = document.getElementById('modal-add-btn');
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+
+            function openProductModal(product) {
+                currentSelectedProduct = product;
+                selectedDips = [];
+
+                // Reset steps
+                step1.style.display = 'block';
+                step2.style.display = 'none';
+                nextBtn.style.display = 'block';
+                addBtn.style.display = 'none';
+                cancelBtn.innerText = 'Annuleren';
+
+                // Fill data
+                document.getElementById('modal-img').src = product.image_filename ? `assets/img/${product.image_filename}` : 'assets/dino_start.png';
+                document.getElementById('modal-name').innerText = product.name;
+                document.getElementById('modal-kcal').innerText = `${product.calories} kcal`;
+                document.getElementById('modal-desc').innerText = product.description || "Geen beschrijving beschikbaar.";
+
+                productModal.classList.add('show');
+            }
+
+            function closeProductModal() {
+                productModal.classList.remove('show');
+            }
+
+            function goToStep2() {
+                step1.style.display = 'none';
+                step2.style.display = 'block';
+                nextBtn.style.display = 'none';
+                addBtn.style.display = 'block';
+                cancelBtn.innerText = 'Verwijderen';
+
+                // Render Dips
+                const dipsContainer = document.getElementById('dips-container');
+                dipsContainer.innerHTML = '';
+
+                const signatureDips = allMenuData.filter(item => item.category === "Signature Dips");
+
+                signatureDips.forEach(dip => {
+                    const dipCard = document.createElement('div');
+                    dipCard.className = 'dip-card';
+                    const dipImg = dip.image_filename ? `assets/img/${dip.image_filename}` : 'assets/dino_start.png';
+                    const dipPrice = parseFloat(dip.price).toFixed(2).replace('.', ',');
+
+                    dipCard.innerHTML = `
+                        <img src="${dipImg}" alt="${dip.name}">
+                        <span class="dip-name">${dip.name}</span>
+                        <span class="dip-price">+€${dipPrice}</span>
+                    `;
+
+                    dipCard.addEventListener('click', () => {
+                        dipCard.classList.toggle('selected');
+                        const index = selectedDips.findIndex(d => d.product_id === dip.product_id);
+                        if (index > -1) {
+                            selectedDips.splice(index, 1);
+                        } else {
+                            selectedDips.push(dip);
+                        }
+                        updateAddButtonPrice();
+                    });
+
+                    dipsContainer.appendChild(dipCard);
+                });
+
+                updateAddButtonPrice();
+            }
+
+            function updateAddButtonPrice() {
+                let totalPrice = parseFloat(currentSelectedProduct.price);
+                selectedDips.forEach(dip => totalPrice += parseFloat(dip.price));
+                addBtn.innerText = `Toevoegen (€${totalPrice.toFixed(2).replace('.', ',')})`;
+            }
+
+            nextBtn.addEventListener('click', goToStep2);
+            cancelBtn.addEventListener('click', closeProductModal);
+            addBtn.addEventListener('click', () => {
+                // Add main product
+                addToCart(currentSelectedProduct);
+
+                // Add selected dips
+                selectedDips.forEach(dip => {
+                    addToCart(dip);
+                });
+
+                closeProductModal();
+                // We keep them on menu.php as requested (after adding they go "back" to the menu flow)
+            });
 
             function updateCartUI() {
                 const cartBar = document.getElementById('cart-bar');
@@ -486,6 +787,7 @@
             fetch("api/get_menu.php")
                 .then(res => res.json())
                 .then(data => {
+                    allMenuData = data;
                     const productsContainer = document.getElementById("products-container");
                     const categoriesContainer = document.getElementById("categories-container");
 
@@ -543,9 +845,18 @@
                             `;
 
                             card.addEventListener("click", () => {
-                                addToCart(item);
-                                card.classList.add('added');
-                                setTimeout(() => card.classList.remove('added'), 500);
+                                // If it's already a dip, maybe don't open the modal to avoid recursion? 
+                                // Actually, user might want dips for dips? Probably not.
+                                // But the prompt says "wanneer je een product-card aandrukt".
+                                // If the product IS a signature dip, maybe just add it?
+                                // Let's check if it belongs to Signature Dips.
+                                if (item.category === "Signature Dips") {
+                                    addToCart(item);
+                                    card.classList.add('added');
+                                    setTimeout(() => card.classList.remove('added'), 500);
+                                } else {
+                                    openProductModal(item);
+                                }
                             });
 
                             grid.appendChild(card);

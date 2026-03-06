@@ -27,7 +27,7 @@ body {
 
 #kiosk-wrapper {
     position: relative;
-    width: 700px;
+    width: 1080px;
     height: 1920px;
     /* Scale down to fit the screen while maintaining aspect ratio if the screen is smaller */
     max-width: 100vw;
