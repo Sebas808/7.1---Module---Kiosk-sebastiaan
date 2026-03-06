@@ -338,31 +338,43 @@
             }
 
             async function printReceipt() {
-                if (!selectedDevice) {
-                    // Try one last auto-detect before giving up
-                    await autoDetectPrinter();
-                    if (!selectedDevice) {
-                        throw new Error("Geen printer verbonden. Klik op 'Printer Instellen'.");
+                try {
+                    // Precies dezelfde flow als je werkende test-code:
+                    let device = selectedDevice;
+
+                    if (!device) {
+                        updatePrinterStatus("Selecteer je printer...", "loading");
+                        device = await navigator.usb.requestDevice({
+                            filters: PRINTER_VENDORS.map(v => ({ vendorId: v }))
+                        });
+                        selectedDevice = device;
                     }
+
+                    updatePrinterStatus("Verbinden...", "loading");
+                    if (!device.opened) await device.open();
+                    await device.selectConfiguration(1);
+                    try { await device.claimInterface(0); } catch (e) {}
+
+                    const encoder = new TextEncoder();
+                    const receiptData = buildReceipt();
+
+                    updatePrinterStatus("Bon printen...", "loading");
+                    
+                    // Gebruik endpoint '1' zoals in je werkende test-code
+                    await device.transferOut(1, encoder.encode(receiptData));
+                    
+                    updatePrinterStatus("✓ Bon geprint!", "success");
+
+                    setTimeout(async () => {
+                        try {
+                            await device.releaseInterface(0);
+                            await device.close();
+                        } catch (e) {}
+                    }, 1000);
+                } catch (err) {
+                    selectedDevice = null; // Reset bij fout
+                    throw err;
                 }
-
-                updatePrinterStatus("Bon printen...", "loading");
-
-                await selectedDevice.open();
-                if (selectedDevice.configuration === null) await selectedDevice.selectConfiguration(1);
-                try { await selectedDevice.claimInterface(0); } catch (e) { }
-
-                const encoder = new TextEncoder();
-                const receiptData = buildReceipt();
-                const intf = selectedDevice.configuration.interfaces[0].alternates[0];
-                const endpoint = intf.endpoints.find(e => e.direction === 'out');
-
-                if (!endpoint) throw new Error("Printer endpoint niet gevonden");
-
-                await selectedDevice.transferOut(endpoint.endpointNumber, encoder.encode(receiptData));
-                updatePrinterStatus("✓ Bon geprint!", "success");
-
-                setTimeout(() => selectedDevice.close(), 1000);
             }
 
             function renderCart() {

@@ -638,6 +638,16 @@
                             <!-- Dips injected here -->
                         </div>
                     </div>
+
+                    <!-- Step 3: Side Dishes -->
+                    <div id="modal-step-3" class="step-dips">
+                        <h2 class="modal-product-name" style="font-size: 2.2rem; margin-bottom: 0.5rem;">KIES JE SIDE
+                            DISH</h2>
+                        <p style="text-align:center; color:#666;">Maak je maaltijd compleet met een bijgerecht!</p>
+                        <div id="sides-container" class="dips-grid">
+                            <!-- Sides injected here -->
+                        </div>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
@@ -654,25 +664,26 @@
             let cart = [];
             let currentSelectedProduct = null;
             let selectedDips = [];
+            let selectedSides = [];
             let allMenuData = [];
 
             const productModal = document.getElementById('product-modal');
             const step1 = document.getElementById('modal-step-1');
             const step2 = document.getElementById('modal-step-2');
+            const step3 = document.getElementById('modal-step-3');
             const nextBtn = document.getElementById('modal-next-btn');
             const addBtn = document.getElementById('modal-add-btn');
             const cancelBtn = document.getElementById('modal-cancel-btn');
 
+            let currentStep = 1;
+
             function openProductModal(product) {
                 currentSelectedProduct = product;
                 selectedDips = [];
+                selectedSides = [];
+                currentStep = 1;
 
-                // Reset steps
-                step1.style.display = 'block';
-                step2.style.display = 'none';
-                nextBtn.style.display = 'block';
-                addBtn.style.display = 'none';
-                cancelBtn.innerText = 'Annuleren';
+                showStep(1);
 
                 // Fill data
                 document.getElementById('modal-img').src = product.image_filename ? `assets/img/${product.image_filename}` : 'assets/dino_start.png';
@@ -683,71 +694,92 @@
                 productModal.classList.add('show');
             }
 
-            function closeProductModal() {
-                productModal.classList.remove('show');
+            function showStep(step) {
+                currentStep = step;
+                step1.style.display = (step === 1) ? 'block' : 'none';
+                step2.style.display = (step === 2) ? 'block' : 'none';
+                step3.style.display = (step === 3) ? 'block' : 'none';
+
+                if (step === 1) {
+                    nextBtn.style.display = 'block';
+                    addBtn.style.display = 'none';
+                    cancelBtn.innerText = 'Annuleren';
+                } else if (step === 2) {
+                    nextBtn.style.display = 'block';
+                    addBtn.style.display = 'none';
+                    cancelBtn.innerText = 'Vorige';
+                    renderChoices("Signature Dips", "dips-container", selectedDips);
+                } else if (step === 3) {
+                    nextBtn.style.display = 'none';
+                    addBtn.style.display = 'block';
+                    cancelBtn.innerText = 'Vorige';
+                    renderChoices("Sides & Small Plates", "sides-container", selectedSides);
+                }
+                updateAddButtonPrice();
             }
 
-            function goToStep2() {
-                step1.style.display = 'none';
-                step2.style.display = 'block';
-                nextBtn.style.display = 'none';
-                addBtn.style.display = 'block';
-                cancelBtn.innerText = 'Verwijderen';
+            function renderChoices(categoryName, containerId, selectedArray) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
 
-                // Render Dips
-                const dipsContainer = document.getElementById('dips-container');
-                dipsContainer.innerHTML = '';
+                const items = allMenuData.filter(item => item.category === categoryName);
 
-                const signatureDips = allMenuData.filter(item => item.category === "Signature Dips");
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = `dip-card ${selectedArray.find(s => s.product_id === item.product_id) ? 'selected' : ''}`;
+                    const img = item.image_filename ? `assets/img/${item.image_filename}` : 'assets/dino_start.png';
+                    const priceFormatted = parseFloat(item.price).toFixed(2).replace('.', ',');
 
-                signatureDips.forEach(dip => {
-                    const dipCard = document.createElement('div');
-                    dipCard.className = 'dip-card';
-                    const dipImg = dip.image_filename ? `assets/img/${dip.image_filename}` : 'assets/dino_start.png';
-                    const dipPrice = parseFloat(dip.price).toFixed(2).replace('.', ',');
-
-                    dipCard.innerHTML = `
-                        <img src="${dipImg}" alt="${dip.name}">
-                        <span class="dip-name">${dip.name}</span>
-                        <span class="dip-price">+€${dipPrice}</span>
+                    card.innerHTML = `
+                        <img src="${img}" alt="${item.name}">
+                        <span class="dip-name">${item.name}</span>
+                        <span class="dip-price">+€${priceFormatted}</span>
                     `;
 
-                    dipCard.addEventListener('click', () => {
-                        dipCard.classList.toggle('selected');
-                        const index = selectedDips.findIndex(d => d.product_id === dip.product_id);
+                    card.addEventListener('click', () => {
+                        card.classList.toggle('selected');
+                        const index = selectedArray.findIndex(s => s.product_id === item.product_id);
                         if (index > -1) {
-                            selectedDips.splice(index, 1);
+                            selectedArray.splice(index, 1);
                         } else {
-                            selectedDips.push(dip);
+                            selectedArray.push(item);
                         }
                         updateAddButtonPrice();
                     });
 
-                    dipsContainer.appendChild(dipCard);
+                    container.appendChild(card);
                 });
+            }
 
-                updateAddButtonPrice();
+            function closeProductModal() {
+                productModal.classList.remove('show');
             }
 
             function updateAddButtonPrice() {
+                if (!currentSelectedProduct) return;
                 let totalPrice = parseFloat(currentSelectedProduct.price);
-                selectedDips.forEach(dip => totalPrice += parseFloat(dip.price));
+                selectedDips.forEach(d => totalPrice += parseFloat(d.price));
+                selectedSides.forEach(s => totalPrice += parseFloat(s.price));
                 addBtn.innerText = `Toevoegen (€${totalPrice.toFixed(2).replace('.', ',')})`;
             }
 
-            nextBtn.addEventListener('click', goToStep2);
-            cancelBtn.addEventListener('click', closeProductModal);
+            nextBtn.addEventListener('click', () => {
+                showStep(currentStep + 1);
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                if (currentStep > 1) {
+                    showStep(currentStep - 1);
+                } else {
+                    closeProductModal();
+                }
+            });
+
             addBtn.addEventListener('click', () => {
-                // Add main product
                 addToCart(currentSelectedProduct);
-
-                // Add selected dips
-                selectedDips.forEach(dip => {
-                    addToCart(dip);
-                });
-
+                selectedDips.forEach(d => addToCart(d));
+                selectedSides.forEach(s => addToCart(s));
                 closeProductModal();
-                // We keep them on menu.php as requested (after adding they go "back" to the menu flow)
             });
 
             function updateCartUI() {
