@@ -946,6 +946,7 @@
                 .catch(err => console.error("Fout bij het laden van het menu:", err));
         });
     </script>
+    <script src="js/script.js"></script>
 </body>
 
 </html>
