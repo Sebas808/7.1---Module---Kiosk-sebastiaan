@@ -78,14 +78,19 @@ body {
     position: relative;
 }
 
-#start-btn {
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-bottom: 100px;
+}
+
+.button-group .cta-button {
     width: 500px;
-    font-size: larger;
     height: 100px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 100px;
 }
 
 /* Slideshow */
