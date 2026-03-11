@@ -29,6 +29,16 @@
 
                 <h1 class="thank-you-text slide-up">DANK JE WEL!</h1>
                 <p class="order-complete-text slide-up-delay">JE BESTELLING IS COMPLEET</p>
+
+                <?php if (isset($_GET['pickup_number'])): ?>
+                    <div class="order-number-box slide-up-delay-2">
+                        <p>JE BESTELNUMMER:</p>
+                        <h2 class="pickup-number">
+                            <?php echo htmlspecialchars($_GET['pickup_number']); ?>
+                        </h2>
+                    </div>
+                <?php endif; ?>
+
                 <p class="preparing-text slide-up-delay-2">We maken je bestelling klaar.</p>
 
                 <div class="mascot-container-small">
@@ -43,6 +53,12 @@
     </main>
 
     <script src="js/script.js"></script>
+    <script>
+        // Auto redirect to home after 10 seconds
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 10000);
+    </script>
 </body>
 
 </html>

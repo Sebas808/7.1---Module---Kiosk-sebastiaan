@@ -304,13 +304,15 @@
                 }
             }
 
-            function buildReceipt() {
+            function buildReceipt(pickupNumber) {
                 const INIT = "\x1B\x40";
                 const CENTER = "\x1B\x61\x01";
                 const LEFT = "\x1B\x61\x00";
                 const BOLD_ON = "\x1B\x45\x01";
                 const BOLD_OFF = "\x1B\x45\x00";
                 const CUT = "\x1D\x56\x00";
+                const DOUBLE_SIZE = "\x1D\x21\x11"; // Double height and width
+                const NORMAL_SIZE = "\x1D\x21\x00";
 
                 let total = 0;
                 let itemsText = "";
@@ -328,6 +330,9 @@
                 return INIT +
                     CENTER + BOLD_ON + "KIOSK BESTELLING\n" + BOLD_OFF +
                     "--------------------------------\n" +
+                    CENTER + "UW BESTELNUMMER:\n\n" +
+                    DOUBLE_SIZE + pickupNumber + NORMAL_SIZE + "\n\n" +
+                    "--------------------------------\n" +
                     LEFT + itemsText +
                     "--------------------------------\n" +
                     BOLD_ON + "TOTAAL:           EUR " + total.toFixed(2).replace('.', ',').padStart(8, " ") + BOLD_OFF + "\n\n" +
@@ -337,7 +342,7 @@
                     CUT;
             }
 
-            async function printReceipt() {
+            async function printReceipt(pickupNumber) {
                 try {
                     // Precies dezelfde flow als je werkende test-code:
                     let device = selectedDevice;
@@ -353,23 +358,23 @@
                     updatePrinterStatus("Verbinden...", "loading");
                     if (!device.opened) await device.open();
                     await device.selectConfiguration(1);
-                    try { await device.claimInterface(0); } catch (e) {}
+                    try { await device.claimInterface(0); } catch (e) { }
 
                     const encoder = new TextEncoder();
-                    const receiptData = buildReceipt();
+                    const receiptData = buildReceipt(pickupNumber);
 
                     updatePrinterStatus("Bon printen...", "loading");
-                    
+
                     // Gebruik endpoint '1' zoals in je werkende test-code
                     await device.transferOut(1, encoder.encode(receiptData));
-                    
+
                     updatePrinterStatus("✓ Bon geprint!", "success");
 
                     setTimeout(async () => {
                         try {
                             await device.releaseInterface(0);
                             await device.close();
-                        } catch (e) {}
+                        } catch (e) { }
                     }, 1000);
                 } catch (err) {
                     selectedDevice = null; // Reset bij fout
@@ -440,29 +445,49 @@
             document.getElementById('setup-printer').addEventListener('click', selectUSBDevice);
 
             document.getElementById('pay-button').addEventListener('click', async () => {
+                if (cart.length === 0) return;
+
                 const btn = document.getElementById('pay-button');
                 btn.disabled = true;
                 btn.innerText = "VERWERKEN...";
 
                 try {
-                    // Try to print first
-                    await printReceipt();
-                    // Small delay to let the user see the "Geprint" status
-                    setTimeout(() => {
-                        localStorage.removeItem('kiosk_cart');
-                        window.location.href = 'eindpagina.php';
-                    }, 1500);
+                    // 1. Create order in database
+                    updatePrinterStatus("Bestelling opslaan...", "loading");
+                    const response = await fetch('api/create_order.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cart: cart })
+                    });
+
+                    const orderResult = await response.json();
+                    if (!orderResult.success) {
+                        throw new Error(orderResult.message || "Kon bestelling niet opslaan");
+                    }
+
+                    const pickupNumber = orderResult.pickup_number;
+
+                    // 2. Try to print
+                    try {
+                        await printReceipt(pickupNumber);
+                    } catch (printError) {
+                        console.error("Print error:", printError);
+                        if (!confirm("Kon bon niet printen. Toch doorgaan? (Je bestelnummer is " + pickupNumber + ")")) {
+                            btn.disabled = false;
+                            btn.innerText = "AFREKENEN";
+                            return;
+                        }
+                    }
+
+                    // 3. Success!
+                    localStorage.removeItem('kiosk_cart');
+                    window.location.href = 'eindpagina.php?pickup_number=' + pickupNumber;
+
                 } catch (error) {
-                    // If printing fails, ask user if they want to proceed anyway or fix printer
-                    updatePrinterStatus("Printer Fout: " + error.message, "error");
+                    updatePrinterStatus("Fout: " + error.message, "error");
                     btn.disabled = false;
                     btn.innerText = "AFREKENEN (PROBEER OPNIEUW)";
-
-                    // Option to proceed without print for kiosk resilience
-                    if (confirm("Er is een probleem met de printer. Wilt u toch afrekenen zonder bon?")) {
-                        localStorage.removeItem('kiosk_cart');
-                        window.location.href = 'eindpagina.php';
-                    }
+                    alert("Er is iets misgegaan: " + error.message);
                 }
             });
 
