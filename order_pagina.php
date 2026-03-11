@@ -143,10 +143,16 @@
 
         .total-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
             margin-bottom: 2rem;
             padding: 0 1rem;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .total-label {
@@ -159,6 +165,23 @@
             font-size: 3rem;
             font-weight: 900;
             color: #053631;
+        }
+
+        .total-calories {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8cd003;
+            background: #f4f8e8;
+            padding: 0.4rem 1rem;
+            border-radius: 12px;
+        }
+
+        .item-calories {
+            font-size: 1.1rem;
+            color: #8cd003;
+            font-weight: 600;
+            margin-top: 0.2rem;
+            display: block;
         }
 
         .pay-btn {
@@ -254,8 +277,14 @@
 
         <section class="footer-payment" id="payment-section">
             <div class="total-container">
-                <span class="total-label">TOTAAL</span>
-                <span class="total-amount" id="grand-total">€0,00</span>
+                <div class="total-row">
+                    <span class="total-label">TOTAAL</span>
+                    <span class="total-amount" id="grand-total">€0,00</span>
+                </div>
+                <div class="total-row">
+                    <span></span>
+                    <span class="total-calories" id="total-kcal">0 kcal</span>
+                </div>
             </div>
             <button class="pay-btn" id="pay-button">AFREKENEN</button>
             <div id="printer-status"></div>
@@ -387,6 +416,7 @@
                 const emptyMsg = document.getElementById('empty-msg');
                 const paymentSection = document.getElementById('payment-section');
                 const grandTotal = document.getElementById('grand-total');
+                const totalKcal = document.getElementById('total-kcal');
 
                 container.innerHTML = '';
 
@@ -400,9 +430,11 @@
                 paymentSection.style.display = 'block';
 
                 let total = 0;
+                let caloriesTotal = 0;
 
                 cart.forEach((item, index) => {
                     total += item.price * item.quantity;
+                    caloriesTotal += (item.calories || 0) * item.quantity;
                     const priceFormatted = (item.price * item.quantity).toFixed(2).replace('.', ',');
 
                     let imageSrc = item.image_filename
@@ -415,6 +447,7 @@
                         <img src="${imageSrc}" alt="${item.name}">
                         <div class="item-details">
                             <h3 class="item-name">${item.name}</h3>
+                            <span class="item-calories">${item.calories || 0} kcal per stuk</span>
                             <p class="item-price">€${priceFormatted}</p>
                         </div>
                         <div class="quantity-controls">
@@ -427,6 +460,7 @@
                 });
 
                 grandTotal.innerText = `€${total.toFixed(2).replace('.', ',')}`;
+                totalKcal.innerText = `${caloriesTotal} kcal`;
             }
 
             function syncLocalStorage() {
